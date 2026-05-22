@@ -1,0 +1,38 @@
+# Binaries
+quick-ticket
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build output
+/bin/
+/dist/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+vendor/
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Docker
+docker-compose.override.yml
+
+# Temporary
+tmp/
+*.log
