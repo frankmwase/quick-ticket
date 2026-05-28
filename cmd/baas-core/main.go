@@ -99,7 +99,7 @@ func main() {
 	paymentOrchestrator := services.NewMonetizedTicketOrchestrator(ticketService, paymentProvider)
 
 	// ── HTTP Handlers ────────────────────────────────────────────────────────
-	ticketHandler := handlers.NewTicketHandler(ticketService)
+	ticketHandler := handlers.NewTicketHandler(ticketService, batchRepo)
 	batchHandler := handlers.NewBatchHandler(batchRepo)
 	workflowHandler := handlers.NewWorkflowHandler(workflowService)
 	extHandler := handlers.NewExtensionHandler(paymentOrchestrator)

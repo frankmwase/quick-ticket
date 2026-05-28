@@ -19,10 +19,11 @@ import (
 
 type TicketHandler struct {
 	ticketService domain.TicketService
+	batchRepo     domain.BatchRepository
 }
 
-func NewTicketHandler(ts domain.TicketService) *TicketHandler {
-	return &TicketHandler{ticketService: ts}
+func NewTicketHandler(ts domain.TicketService, br domain.BatchRepository) *TicketHandler {
+	return &TicketHandler{ticketService: ts, batchRepo: br}
 }
 
 type GenerateRequest struct {
@@ -70,11 +71,32 @@ func (h *TicketHandler) GenerateTickets(w http.ResponseWriter, r *http.Request) 
 		tenantID = tenant.ID
 	}
 
+	// Auto-fill owner_id from tenant if not provided
+	ownerID := req.OwnerID
+	if ownerID == "" {
+		ownerID = tenantID
+	}
+
+	// Auto-create a batch if none specified
+	batchID := req.BatchID
+	if batchID == "" {
+		newBatch := &domain.TicketBatch{
+			ID:       uuid.New().String(),
+			TenantID: tenantID,
+			Title:    "Auto-generated batch",
+		}
+		if err := h.batchRepo.Save(r.Context(), newBatch); err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to create batch: "+err.Error())
+			return
+		}
+		batchID = newBatch.ID
+	}
+
 	bulkReq := domain.BulkGenerateRequest{
 		TenantID:   tenantID,
-		BatchID:    req.BatchID,
+		BatchID:    batchID,
 		Count:      req.Count,
-		OwnerID:    req.OwnerID,
+		OwnerID:    ownerID,
 		ManagedBy:  req.ManagedBy,
 		AutoEmail:  req.AutoEmail,
 		TargetMail: req.TargetMail,

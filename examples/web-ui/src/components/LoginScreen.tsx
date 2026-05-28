@@ -60,7 +60,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               type="text"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
-              className="w-full bg-transparent border border-terminal-border text-terminal-base px-3 py-2 text-sm font-mono focus:outline-none focus:border-terminal-accent focus:shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all duration-300 transition-colors"
+              className="w-full bg-transparent border border-terminal-border text-terminal-base px-3 py-2 text-sm font-mono focus:outline-none focus:border-terminal-accent focus:shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all duration-300"
               placeholder="http://localhost:8080"
             />
           </div>
@@ -75,7 +75,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               type="text"
               value={tenantId}
               onChange={(e) => setTenantId(e.target.value)}
-              className="w-full bg-transparent border border-terminal-border text-terminal-base px-3 py-2 text-sm font-mono focus:outline-none focus:border-terminal-accent focus:shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all duration-300 transition-colors"
+              className="w-full bg-transparent border border-terminal-border text-terminal-base px-3 py-2 text-sm font-mono focus:outline-none focus:border-terminal-accent focus:shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all duration-300"
               placeholder="your-tenant-id"
             />
           </div>
@@ -90,7 +90,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="w-full bg-transparent border border-terminal-border text-terminal-base px-3 py-2 text-sm font-mono focus:outline-none focus:border-terminal-accent focus:shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all duration-300 transition-colors"
+              className="w-full bg-transparent border border-terminal-border text-terminal-base px-3 py-2 text-sm font-mono focus:outline-none focus:border-terminal-accent focus:shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all duration-300"
               placeholder="••••••••"
             />
           </div>
@@ -108,7 +108,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             type="submit"
             disabled={loading}
             className="w-full border border-terminal-border text-terminal-base py-2 text-sm tracking-widest uppercase
-                       hover:border-terminal-accent hover:text-terminal-accent hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300 hover:border-terminal-border transition-all duration-300
+                       hover:border-terminal-accent hover:text-terminal-accent hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300
                        disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {loading ? '◉ AUTHENTICATING...' : '▸ ESTABLISH CONNECTION'}

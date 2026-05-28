@@ -78,9 +78,9 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	// Update existing profile (assuming user updates their own profile)
 	_, err := h.db.Exec(r.Context(), `
 		UPDATE user_profiles
-		SET full_name = $1, email = $2
-		WHERE id = $3 AND tenant_id = $4
-	`, req.FullName, req.Email, req.ID, tenant.ID)
+		SET full_name = $1
+		WHERE email = $2 AND tenant_id = $3
+	`, req.FullName, req.Email,  tenant.ID)
 
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to update profile: "+err.Error())

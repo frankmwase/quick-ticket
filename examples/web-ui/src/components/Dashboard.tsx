@@ -25,7 +25,6 @@ export function Dashboard({ creds, onLogout }: DashboardProps) {
 
   // --- Ticket Actions ---
   const [genCount, setGenCount] = useState(1);
-  const [genOwner, setGenOwner] = useState('');
   const [genManagedBy, setGenManagedBy] = useState('');
   const [verifyToken, setVerifyToken] = useState('');
 
@@ -33,7 +32,7 @@ export function Dashboard({ creds, onLogout }: DashboardProps) {
     setLoading(true);
     setStatus('');
     try {
-      const res = await api.generateTickets(creds, genCount, genOwner, genManagedBy);
+      const res = await api.generateTickets(creds, genCount, '', genManagedBy);
       setTickets(res.tickets);
       setStatus(`✓ Generated ${res.count} ticket(s)`);
     } catch (err) {
@@ -188,17 +187,6 @@ export function Dashboard({ creds, onLogout }: DashboardProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-terminal-dim text-[10px] tracking-widest mb-1">OWNER ID</label>
-                  <input
-                    id="gen-owner"
-                    type="text"
-                    value={genOwner}
-                    onChange={(e) => setGenOwner(e.target.value)}
-                    className="w-full bg-transparent border border-terminal-border text-terminal-base px-3 py-2 text-sm font-mono focus:outline-none focus:border-terminal-accent focus:shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all duration-300"
-                    placeholder="owner-id"
-                  />
-                </div>
-                <div>
                   <label className="block text-terminal-dim text-[10px] tracking-widest mb-1">MANAGED BY (MEMBER)</label>
                   <select
                     id="gen-managed-by"
@@ -218,7 +206,7 @@ export function Dashboard({ creds, onLogout }: DashboardProps) {
                   id="gen-submit"
                   onClick={handleGenerate}
                   disabled={loading}
-                  className="w-full border border-terminal-border text-terminal-base py-2 text-xs tracking-widest uppercase hover:border-terminal-accent hover:text-terminal-accent hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300 transition-all disabled:opacity-30"
+                  className="w-full border border-terminal-border text-terminal-base py-2 text-xs tracking-widest uppercase hover:border-terminal-accent hover:text-terminal-accent hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300 disabled:opacity-30"
                 >
                   {loading ? '◉ PROCESSING...' : '▸ GENERATE'}
                 </button>
@@ -230,14 +218,32 @@ export function Dashboard({ creds, onLogout }: DashboardProps) {
                   <div className="text-terminal-dim text-[10px] tracking-widest mb-2">
                     GENERATED ({tickets.length})
                   </div>
-                  <div className="max-h-40 overflow-auto space-y-1">
+                  <div className="max-h-60 overflow-auto space-y-2">
                     {tickets.map((t) => (
                       <div
                         key={t.ID}
-                        className="text-[11px] text-terminal-base/70 font-mono border-l-2 border-terminal-accent border-terminal-border pl-2 py-1"
+                        className="text-[11px] font-mono border border-terminal-border/20 p-2"
                       >
-                        <span className="text-terminal-amber">ID:</span> {t.ID.substring(0, 12)}...
-                        <span className="ml-2 text-terminal-dim">{t.Status}</span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span>
+                            <span className="text-terminal-amber">ID:</span>{' '}
+                            <span className="text-terminal-base/70">{t.ID.substring(0, 12)}...</span>
+                          </span>
+                          <span className="text-terminal-dim">{t.Status}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-terminal-accent">TOKEN:</span>{' '}
+                          <span className="text-terminal-base/50 truncate flex-1">{t.SecureToken.substring(0, 24)}...</span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(t.SecureToken);
+                              setStatus(`✓ Token copied for ticket ${t.ID.substring(0, 8)}...`);
+                            }}
+                            className="text-[9px] text-terminal-accent border border-terminal-accent/30 px-2 py-0.5 hover:bg-terminal-accent/10 transition-all"
+                          >
+                            COPY
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -316,7 +322,7 @@ export function Dashboard({ creds, onLogout }: DashboardProps) {
                 id="profile-save"
                 onClick={handleUpdateProfile}
                 disabled={loading}
-                className="w-full border border-terminal-border text-terminal-base py-2 text-xs tracking-widest uppercase hover:border-terminal-accent hover:text-terminal-accent hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300 transition-all disabled:opacity-30"
+                className="w-full border border-terminal-border text-terminal-base py-2 text-xs tracking-widest uppercase hover:border-terminal-accent hover:text-terminal-accent hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300 disabled:opacity-30"
               >
                 {loading ? '◉ SAVING...' : '▸ SAVE PROFILE'}
               </button>
@@ -366,7 +372,7 @@ export function Dashboard({ creds, onLogout }: DashboardProps) {
                   id="member-create"
                   onClick={handleCreateMember}
                   disabled={loading || !newMemberName}
-                  className="w-full border border-terminal-border text-terminal-base py-2 text-xs tracking-widest uppercase hover:border-terminal-accent hover:text-terminal-accent hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300 transition-all disabled:opacity-30"
+                  className="w-full border border-terminal-border text-terminal-base py-2 text-xs tracking-widest uppercase hover:border-terminal-accent hover:text-terminal-accent hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300 disabled:opacity-30"
                 >
                   {loading ? '◉ CREATING...' : '▸ CREATE MEMBER'}
                 </button>

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { GridFloor } from './GridFloor';
 import { FloatingParticles } from './FloatingParticles';
@@ -10,8 +11,11 @@ interface SceneProps {
 }
 
 export function Scene({ children }: SceneProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div className="fixed inset-0 z-0 bg-[#0a0a0a]">
+    <div className="fixed inset-0 z-0 bg-[#0a0a0a]" ref={wrapperRef}>
+      {/* ── Three.js Scene (pure 3D — no DOM children) ────────────── */}
       <Canvas
         camera={{ position: [0, 1.5, 8], fov: 50 }}
         gl={{ alpha: true, antialias: true }}
@@ -28,16 +32,20 @@ export function Scene({ children }: SceneProps) {
         <FloatingParticles />
         <HologramTicket />
 
-        {/* HTML UI inside Canvas using experimental HIC API */}
-        <HTMLInCanvas>{children}</HTMLInCanvas>
-
         {/* Fog */}
         <fog attach="fog" args={['#0a0a0a', 4, 25]} />
       </Canvas>
 
-      {/* CRT Scanline overlay (post-processing effect, safely on top) */}
+      {/* ── HTML-in-Canvas API ────────────────────────────────────── */}
+      {/* Portals children INTO the <canvas> DOM element with        */}
+      {/* layoutsubtree for accessibility + browser compositing.     */}
+      {/* Lives outside the R3F JSX tree to avoid reconciler errors. */}
+      <HTMLInCanvas wrapperRef={wrapperRef}>
+        {children}
+      </HTMLInCanvas>
+
+      {/* ── CRT Scanline overlay ──────────────────────────────────── */}
       <div className="scanlines fixed inset-0 pointer-events-none z-[100]" />
     </div>
   );
 }
-

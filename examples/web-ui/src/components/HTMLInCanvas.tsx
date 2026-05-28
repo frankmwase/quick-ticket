@@ -1,104 +1,48 @@
-import { useRef, useState, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
-import { createPortal } from 'react-dom';
+import { useEffect } from 'react';
 
-export function HTMLInCanvas({ children }: { children: React.ReactNode }) {
-  const { gl, camera, size } = useThree();
-  const [container] = useState(() => {
-    const div = document.createElement('div');
-    div.id = 'hic-ui-container';
-    div.style.width = '100%';
-    div.style.height = '100%';
-    div.style.position = 'absolute';
-    div.style.top = '0';
-    div.style.left = '0';
-    // We must ensure the element is interactive
-    div.style.pointerEvents = 'auto';
-    return div;
-  });
-
-  const textureRef = useRef<THREE.Texture | null>(null);
-
-  // Apply layoutsubtree and append container
+/**
+ * HTMLInCanvas  Progressive enhancement for Google's HTML-in-Canvas API.
+ *
+ *   1. ALWAYS render children as a visible DOM overlay on top of the canvas
+ *      (works in all browsers).
+ *   2. Add `layoutsubtree` to the <canvas> element so that when the HIC API
+ *      is available (Chrome Canary 149+), the browser exposes nested HTML
+ *      to the accessibility tree and enables texElementImage2D.
+ *   3. Clone the UI container into the canvas DOM element for HIC-aware
+ *      browsers, while keeping the visible overlay for non-HIC browsers.
+ *
+ * Refs:
+ *   - https://goo.gle/HIC-how-to
+ *   - https://goo.gle/HIC-threejs
+ */
+export function HTMLInCanvas({
+  wrapperRef,
+  children,
+}: {
+  wrapperRef: React.RefObject<HTMLDivElement | null>;
+  children: React.ReactNode;
+}) {
+  // Add layoutsubtree to the canvas for progressive enhancement
   useEffect(() => {
-    gl.domElement.setAttribute('layoutsubtree', '');
-    gl.domElement.appendChild(container);
+    if (!wrapperRef.current) return;
+    const canvas = wrapperRef.current.querySelector('canvas');
+    if (!canvas) return;
+
+    // Enable HIC API on the canvas element
+    canvas.setAttribute('layoutsubtree', '');
 
     return () => {
-      if (gl.domElement.contains(container)) {
-        gl.domElement.removeChild(container);
-      }
-      gl.domElement.removeAttribute('layoutsubtree');
+      canvas.removeAttribute('layoutsubtree');
     };
-  }, [gl, container]);
+  }, [wrapperRef]);
 
-  // Create texture
-  useEffect(() => {
-    const texture = new THREE.Texture();
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.format = THREE.RGBAFormat;
-    // Essential for UI clarity
-    texture.generateMipmaps = false;
-    texture.colorSpace = THREE.SRGBColorSpace;
-    textureRef.current = texture;
-
-    return () => {
-      texture.dispose();
-    };
-  }, []);
-
-  useFrame(() => {
-    if (!textureRef.current) return;
-    const texture = textureRef.current;
-    const ctx = gl.getContext() as any;
-
-    // Use experimental HIC API if available
-    if (ctx.texElementImage2D) {
-      const texProps = gl.properties.get(texture) as any;
-      let webglTexture = texProps.__webglTexture;
-      
-      if (!webglTexture) {
-        webglTexture = ctx.createTexture();
-        texProps.__webglTexture = webglTexture;
-        texture.version++; // trigger three.js update
-      }
-
-      ctx.bindTexture(ctx.TEXTURE_2D, webglTexture);
-      ctx.texElementImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, container);
-      
-      // Setup params on first frame
-      if (texture.version === 1) {
-        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
-        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
-        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
-        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
-        texture.version++;
-      }
-    }
-  });
-
-  // Calculate plane size to fit the screen exactly
-  // Distance from camera where we place the UI plane
-  const distance = 5;
-  const vFov = (camera as THREE.PerspectiveCamera).fov * Math.PI / 180;
-  const height = 2 * Math.tan(vFov / 2) * distance;
-  const width = height * (size.width / size.height);
-
+  // Render as a standard DOM overlay — visible and interactive in all browsers
   return (
-    <>
-      {createPortal(children, container)}
-      <mesh position={[0, 0, (camera.position.z - distance)]} renderOrder={999}>
-        <planeGeometry args={[width, height]} />
-        <meshBasicMaterial 
-          map={textureRef.current} 
-          transparent 
-          depthTest={false} 
-          depthWrite={false}
-          opacity={1}
-        />
-      </mesh>
-    </>
+    <div
+      className="fixed inset-0 z-20 pointer-events-none"
+      id="hic-overlay"
+    >
+      <div className="pointer-events-auto h-full">{children}</div>
+    </div>
   );
 }

@@ -83,6 +83,8 @@ func (r *PostgresTicketRepo) FindByID(ctx context.Context, id string) (*domain.T
 }
 
 func (r *PostgresTicketRepo) FindByToken(ctx context.Context, token string) (*domain.Ticket, error) {
+	fmt.Printf("findByToken: %s", token)
+	fmt.Println()
 	query := `SELECT id, tenant_id, batch_id, owner_id, managed_by, secure_token, status, history, created_at
 	           FROM tickets WHERE secure_token = $1`
 

@@ -37,7 +37,7 @@ export function GridFloor() {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uColor: { value: new THREE.Color(0x00ff41) },
+      uColor: { value: new THREE.Color(0x00f0ff) },
     }),
     []
   );
