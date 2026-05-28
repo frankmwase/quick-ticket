@@ -10,6 +10,7 @@ type UserProfile struct {
 	TenantID  string    `json:"tenant_id"`
 	Email     string    `json:"email"`
 	FullName  string    `json:"full_name"`
+	Role      string    `json:"role"`
 	AvatarURL string    `json:"avatar_url"`
 	Bio       string    `json:"bio"`
 	CreatedAt time.Time `json:"created_at"`

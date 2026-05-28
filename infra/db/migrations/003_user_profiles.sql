@@ -1,0 +1,18 @@
+CREATE TABLE user_profiles (
+    id UUID PRIMARY KEY,
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'user',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tenant_id, email)
+);
+
+CREATE TABLE members (
+    id UUID PRIMARY KEY,
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'member',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

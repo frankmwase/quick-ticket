@@ -9,19 +9,17 @@ import (
 	"quick-ticket/interfaces/http/middleware"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // ProfileHandler handles profile and member operations.
 type ProfileHandler struct {
-	// In-memory stores for testing purposes
-	profiles map[string]*domain.UserProfile
-	members  map[string][]*domain.Member
+	db *pgxpool.Pool
 }
 
-func NewProfileHandler() *ProfileHandler {
+func NewProfileHandler(db *pgxpool.Pool) *ProfileHandler {
 	return &ProfileHandler{
-		profiles: make(map[string]*domain.UserProfile),
-		members:  make(map[string][]*domain.Member),
+		db: db,
 	}
 }
 
@@ -32,17 +30,33 @@ func (h *ProfileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, exists := h.profiles[tenant.ID]
-	if !exists {
-		// Create a default profile if it doesn't exist
-		profile = &domain.UserProfile{
+	var profile domain.UserProfile
+	err := h.db.QueryRow(r.Context(), `
+		SELECT id, tenant_id, email, full_name, role, created_at
+		FROM user_profiles
+		WHERE tenant_id = $1 LIMIT 1
+	`, tenant.ID).Scan(&profile.ID, &profile.TenantID, &profile.Email, &profile.FullName, &profile.Role, &profile.CreatedAt)
+
+	if err != nil {
+		// If no profile exists, create a default one
+		profile = domain.UserProfile{
 			ID:        uuid.New().String(),
 			TenantID:  tenant.ID,
 			Email:     "admin@" + tenant.Name + ".com",
 			FullName:  tenant.Name + " Admin",
+			Role:      "admin",
 			CreatedAt: time.Now().UTC(),
 		}
-		h.profiles[tenant.ID] = profile
+		_, insertErr := h.db.Exec(r.Context(), `
+			INSERT INTO user_profiles (id, tenant_id, email, full_name, role, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6)
+			ON CONFLICT DO NOTHING
+		`, profile.ID, profile.TenantID, profile.Email, profile.FullName, profile.Role, profile.CreatedAt)
+
+		if insertErr != nil {
+			writeError(w, http.StatusInternalServerError, "failed to create default profile: "+insertErr.Error())
+			return
+		}
 	}
 
 	writeJSON(w, http.StatusOK, profile)
@@ -61,19 +75,18 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ensure ID and TenantID are preserved
-	existing, exists := h.profiles[tenant.ID]
-	if exists {
-		req.ID = existing.ID
-		req.TenantID = existing.TenantID
-		req.CreatedAt = existing.CreatedAt
-	} else {
-		req.ID = uuid.New().String()
-		req.TenantID = tenant.ID
-		req.CreatedAt = time.Now().UTC()
+	// Update existing profile (assuming user updates their own profile)
+	_, err := h.db.Exec(r.Context(), `
+		UPDATE user_profiles
+		SET full_name = $1, email = $2
+		WHERE id = $3 AND tenant_id = $4
+	`, req.FullName, req.Email, req.ID, tenant.ID)
+
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update profile: "+err.Error())
+		return
 	}
 
-	h.profiles[tenant.ID] = &req
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -95,7 +108,7 @@ func (h *ProfileHandler) CreateMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	member := &domain.Member{
+	member := domain.Member{
 		ID:        uuid.New().String(),
 		TenantID:  tenant.ID,
 		Name:      req.Name,
@@ -104,7 +117,16 @@ func (h *ProfileHandler) CreateMember(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now().UTC(),
 	}
 
-	h.members[tenant.ID] = append(h.members[tenant.ID], member)
+	_, err := h.db.Exec(r.Context(), `
+		INSERT INTO members (id, tenant_id, name, role, is_active, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, member.ID, member.TenantID, member.Name, member.Role, member.IsActive, member.CreatedAt)
+
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create member: "+err.Error())
+		return
+	}
+
 	writeJSON(w, http.StatusCreated, member)
 }
 
@@ -115,9 +137,26 @@ func (h *ProfileHandler) GetMembers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	members := h.members[tenant.ID]
-	if members == nil {
-		members = []*domain.Member{}
+	rows, err := h.db.Query(r.Context(), `
+		SELECT id, tenant_id, name, role, is_active, created_at
+		FROM members
+		WHERE tenant_id = $1
+	`, tenant.ID)
+
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to query members: "+err.Error())
+		return
+	}
+	defer rows.Close()
+
+	members := []domain.Member{}
+	for rows.Next() {
+		var m domain.Member
+		if err := rows.Scan(&m.ID, &m.TenantID, &m.Name, &m.Role, &m.IsActive, &m.CreatedAt); err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to scan member: "+err.Error())
+			return
+		}
+		members = append(members, m)
 	}
 
 	writeJSON(w, http.StatusOK, members)
