@@ -5,8 +5,8 @@ A  headless ticketing BaaS built in Go using strict Domain Driven Design. Like M
 ## Features
 
 ### Core Ticketing
-- **High-speed bulk generation** — produce thousands of tickets in a single atomic call via `pgx.CopyFrom`
-- **Cryptographically secure tokens** — every ticket gets a 256-bit random token for verification
+- **bulk generation** — produce thousands of tickets in a single atomic call via `pgx.CopyFrom`
+- **secure tokens** — every ticket gets a 256-bit random token for verification
 - **Full lifecycle management** — `PENDING → ISSUED → VALIDATED → REVOKED` state machine with audit trails
 - **Geofencing** — Haversine-formula location validation before ticket acceptance
 - **Delegation** — manage tickets on behalf of other individuals via `managed_by`
