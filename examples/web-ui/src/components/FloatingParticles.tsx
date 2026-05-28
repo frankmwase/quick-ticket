@@ -17,6 +17,20 @@ export function FloatingParticles() {
     return arr;
   }, []);
 
+  const circleTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.beginPath();
+      context.arc(16, 16, 14, 0, Math.PI * 2);
+      context.fillStyle = '#ffffff';
+      context.fill();
+    }
+    return new THREE.CanvasTexture(canvas);
+  }, []);
+
   useFrame(({ clock }) => {
     if (!pointsRef.current) return;
     const time = clock.getElapsedTime();
@@ -38,8 +52,10 @@ export function FloatingParticles() {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.05}
-        color="#00ff41"
+        size={0.06}
+        color="#00f0ff"
+        map={circleTexture}
+        alphaTest={0.5}
         transparent
         opacity={0.4}
         sizeAttenuation

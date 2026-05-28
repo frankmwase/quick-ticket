@@ -8,11 +8,14 @@ export default {
     extend: {
       colors: {
         terminal: {
-          bg: '#050505',
-          green: '#00ff41',
-          amber: '#ffb000',
-          white: '#e0e0e0',
-          red: '#ff003c',
+          bg: '#0a0a0a',
+          base: '#e5e5e5',     
+          dim: '#8a8a8a',      
+          accent: '#00f0ff',   
+          amber: '#ffb000',    
+          red: '#ff003c',      
+          panel: 'rgba(255, 255, 255, 0.05)',
+          border: 'rgba(255, 255, 255, 0.15)',
         }
       },
       fontFamily: {
