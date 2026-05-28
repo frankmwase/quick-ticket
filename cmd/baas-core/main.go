@@ -104,9 +104,10 @@ func main() {
 	workflowHandler := handlers.NewWorkflowHandler(workflowService)
 	extHandler := handlers.NewExtensionHandler(paymentOrchestrator)
 	healthHandler := handlers.NewHealthHandler()
+	profileHandler := handlers.NewProfileHandler()
 
 	// ── Router ───────────────────────────────────────────────────────────────
-	router := httpPort.SetupRouter(ticketHandler, batchHandler, workflowHandler, extHandler, healthHandler, tenantRepo)
+	router := httpPort.SetupRouter(ticketHandler, batchHandler, workflowHandler, extHandler, healthHandler, profileHandler, tenantRepo)
 
 	// ── Background Workers ───────────────────────────────────────────────────
 	go startSchedulerWorker(workflowService)

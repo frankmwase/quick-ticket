@@ -15,6 +15,7 @@ func SetupRouter(
 	workflowHandler *handlers.WorkflowHandler,
 	extHandler *handlers.ExtensionHandler,
 	healthHandler *handlers.HealthHandler,
+	profileHandler *handlers.ProfileHandler,
 	tenantRepo domain.TenantRepository,
 ) *chi.Mux {
 	r := chi.NewRouter()
@@ -62,6 +63,17 @@ func SetupRouter(
 		// Extension endpoints (MW-JSON checkout)
 		r.Route("/extensions", func(r chi.Router) {
 			r.With(middleware.Idempotency).Post("/checkout", extHandler.Checkout)
+		})
+
+		// Profile and Member endpoints
+		r.Route("/profile", func(r chi.Router) {
+			r.Get("/", profileHandler.GetProfile)
+			r.Put("/", profileHandler.UpdateProfile)
+		})
+
+		r.Route("/members", func(r chi.Router) {
+			r.Get("/", profileHandler.GetMembers)
+			r.Post("/", profileHandler.CreateMember)
 		})
 	})
 
